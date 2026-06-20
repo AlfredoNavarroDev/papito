@@ -14,8 +14,10 @@ app.get("/api/health", (req, res) => {
   res.json({ success: true, message: "Coffee Vibes API running" });
 });
 
-// TODO: mount module routes here
-// app.use("/api/auth", authRoutes);
+const authRoutes = require("./modules/auth/auth.routes");
+
+app.use("/api/auth", authRoutes);
+
 // app.use("/api/products", catalogRoutes);
 // app.use("/api/categories", categoryRoutes);
 // app.use("/api/orders", orderRoutes);
