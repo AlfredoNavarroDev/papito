@@ -15,11 +15,13 @@ app.get("/api/health", (req, res) => {
 });
 
 const authRoutes = require("./modules/auth/auth.routes");
+const catalogRoutes = require("./modules/catalog/catalog.routes");
+const categoryRoutes = require("./modules/catalog/category.routes");
 
 app.use("/api/auth", authRoutes);
+app.use("/api/products", catalogRoutes);
+app.use("/api/categories", categoryRoutes);
 
-// app.use("/api/products", catalogRoutes);
-// app.use("/api/categories", categoryRoutes);
 // app.use("/api/orders", orderRoutes);
 // app.use("/api/payments", paymentRoutes);
 // app.use("/api/delivery", deliveryRoutes);
