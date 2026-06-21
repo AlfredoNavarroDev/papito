@@ -180,17 +180,17 @@ coffee_vibes/
 
 | Método | Ruta         | Auth     | Descripción                        |
 |--------|--------------|----------|------------------------------------|
-| POST   | `/register`  | ❌       | Registrar usuario (email, name, password) |
-| POST   | `/login`     | ❌       | Iniciar sesión (email, password)   |
-| POST   | `/google`    | ❌       | Autenticación con Google (email, googleId) |
+| POST   | `/register`  | ✅       | Registrar usuario (email, name, password) |
+| POST   | `/login`     | ✅       | Iniciar sesión (email, password)   |
+| POST   | `/google`    | ✅       | Autenticación con Google (email, googleId) |
 | GET    | `/me`        | ✅ JWT   | Obtener perfil del usuario autenticado |
 
 ### Productos (`/api/products`)
 
 | Método | Ruta          | Auth     | Rol     | Descripción                        |
 |--------|---------------|----------|---------|------------------------------------|
-| GET    | `/`           | ❌       | —       | Listar productos (filtros: categoryId, productType, page, limit) |
-| GET    | `/:id`        | ❌       | —       | Obtener producto por ID            |
+| GET    | `/`           | ✅       | —       | Listar productos (filtros: categoryId, productType, page, limit) |
+| GET    | `/:id`        | ✅       | —       | Obtener producto por ID            |
 | POST   | `/`           | ✅ JWT   | OWNER   | Crear producto                     |
 | PUT    | `/:id`        | ✅ JWT   | OWNER   | Actualizar producto                |
 | PATCH  | `/:id/stock`  | ✅ JWT   | OWNER   | Actualizar stock                   |
@@ -200,7 +200,7 @@ coffee_vibes/
 
 | Método | Ruta    | Auth     | Rol     | Descripción                        |
 |--------|---------|----------|---------|------------------------------------|
-| GET    | `/`     | ❌       | —       | Listar todas las categorías        |
+| GET    | `/`     | ✅       | —       | Listar todas las categorías        |
 | POST   | `/`     | ✅ JWT   | OWNER   | Crear categoría                    |
 | PUT    | `/:id`  | ✅ JWT   | OWNER   | Actualizar categoría               |
 
