@@ -372,215 +372,18 @@ authorize("OWNER", "ADMIN")
 
 ---
 
-### 🆕 Módulos nuevos a implementar
+### ✅ Módulos implementados
 
----
+Todos los módulos del e-commerce están implementados y funcionando:
 
-### MÓDULO 1: Addresses (Direcciones de entrega)
-
-**Carpeta a crear:** `src/modules/addresses/`
-
-**¿Para qué sirve?** El cliente guarda sus direcciones para recibir pedidos a domicilio.
-
-**Tabla:** `Address` (ya existe en Prisma ✅)
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | Int | PK |
-| `userId` | Int | FK → User (cliente dueño de la dirección) |
-| `street` | String | Calle y número |
-| `city` | String | Ciudad |
-| `reference` | String? | Punto de referencia |
-| `isDefault` | Boolean | Dirección por defecto |
-
-**Archivos a crear:**
-```
-src/modules/addresses/
-├── address.controller.js
-├── address.service.js
-├── address.repository.js
-└── address.routes.js
-```
-
-**Endpoints:**
-| Método | Ruta | Auth | Rol | Descripción |
-|--------|------|------|-----|-------------|
-| GET | `/api/addresses` | ✅ JWT | CUSTOMER | Listar mis direcciones |
-| POST | `/api/addresses` | ✅ JWT | CUSTOMER | Crear dirección |
-| PUT | `/api/addresses/:id` | ✅ JWT | CUSTOMER | Actualizar dirección |
-| DELETE | `/api/addresses/:id` | ✅ JWT | CUSTOMER | Eliminar dirección |
-
-**Lógica de negocio:**
-- Solo el `CUSTOMER` dueño puede ver/editar sus direcciones
-- Al marcar `isDefault=true`, las demás se desmarcan automáticamente
-- No eliminar si está siendo usada en un pedido activo
-
----
-
-### MÓDULO 2: Orders (Pedidos) — El corazón del e-commerce
-
-**Carpeta a crear:** `src/modules/orders/`
-
-**¿Para qué sirve?** Aquí vive toda la lógica del carrito de compras y creación de pedidos.
-
-**Tablas:** `Order`, `OrderItem`, `OrderItemModifier` (ya existen en Prisma ✅)
-
-**Campos importantes de `Order`:**
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | Int | PK |
-| `userId` | Int | FK → User (cliente que compra) |
-| `addressId` | Int? | FK → Address (null si es LOCAL) |
-| `deliveryType` | DeliveryType | `DELIVERY` o `LOCAL` |
-| `status` | OrderStatus | `PENDING` → `PAID` → `PREPARING` → `READY` → `DELIVERED` |
-| `subtotal` | Decimal | Suma de todos los items |
-| `deliveryFee` | Decimal | Costo de envío (0 si LOCAL) |
-| `total` | Decimal | subtotal + deliveryFee |
-| `notes` | String? | Notas del cliente |
-
-**Campos importantes de `OrderItem`:**
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | Int | PK |
-| `orderId` | Int | FK → Order |
-| `productId` | Int | FK → Product |
-| `productSizeId` | Int? | FK → ProductSize (si aplica) |
-| `quantity` | Int | Cantidad |
-| `unitPrice` | Decimal | Precio unitario al momento de la compra |
-| `totalPrice` | Decimal | unitPrice × quantity + modificadores |
-
-**Archivos a crear:**
-```
-src/modules/orders/
-├── order.controller.js
-├── order.service.js
-├── order.repository.js
-└── order.routes.js
-```
-
-**Endpoints:**
-| Método | Ruta | Auth | Rol | Descripción |
-|--------|------|------|-----|-------------|
-| POST | `/api/orders` | ✅ JWT | CUSTOMER | Crear pedido (carrito) |
-| GET | `/api/orders` | ✅ JWT | OWNER, ADMIN | Listar TODOS los pedidos |
-| GET | `/api/orders/my-orders` | ✅ JWT | CUSTOMER | Listar SOLO mis pedidos |
-| GET | `/api/orders/:id` | ✅ JWT | CUSTOMER | Ver detalle (solo si es suyo) |
-| PATCH | `/api/orders/:id/status` | ✅ JWT | OWNER, ADMIN | Cambiar estado |
-
-**Lógica de negocio paso a paso:**
-
-**1. Crear pedido — Body que envía el cliente:**
-```json
-{
-  "deliveryType": "DELIVERY",
-  "addressId": 1,
-  "notes": "Sin azúcar por favor",
-  "items": [
-    {
-      "productId": 1,
-      "productSizeId": 2,
-      "quantity": 2,
-      "modifiers": [{ "modifierId": 1 }]
-    },
-    {
-      "productId": 3,
-      "quantity": 1,
-      "modifiers": []
-    }
-  ]
-}
-```
-
-**2. Validaciones:**
-- Verificar que todos los `productId` existen y están activos
-- Verificar stock suficiente para cada producto
-- Si `deliveryType = DELIVERY`, `addressId` es obligatorio
-- Si `deliveryType = LOCAL`, `addressId` debe ser null
-
-**3. Cálculo de precios:**
-```
-unitPrice = product.basePrice (o productSize.price si aplica)
-totalPrice = (unitPrice × quantity) + suma(extraPrice de modifiers)
-subtotal = suma de todos los totalPrice
-deliveryFee = 0 si LOCAL, 5.00 si DELIVERY
-total = subtotal + deliveryFee
-```
-
-**4. Descontar stock:**
-```js
-product.stock = product.stock - item.quantity
-```
-
-**5. Transición de estados (solo hacia adelante):**
-```
-PENDING ──► PAID ──► PREPARING ──► READY ──► DELIVERED
-```
-- `PENDING` → cuando el cliente crea el pedido
-- `PAID` → cuando el pago se confirma (vía webhook)
-- `PREPARING` → el dueño empieza a preparar
-- `READY` → el pedido está listo
-- `DELIVERED` → se entregó al cliente
-- Solo `OWNER` y `ADMIN` pueden cambiar estados
-- Si el pago es rechazado → restaurar stock, pedido vuelve a `PENDING`
-
----
-
-### MÓDULO 3: Payments (Pagos con Mercado Pago)
-
-**Carpeta a crear:** `src/modules/payments/`
-
-**¿Para qué sirve?** Integrar pagos reales con Mercado Pago.
-
-**Tabla:** `Payment` (ya existe en Prisma ✅)
-
-**Campos importantes:**
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | Int | PK |
-| `orderId` | Int | FK → Order (único por pedido) |
-| `mpPaymentId` | String? | ID del pago en Mercado Pago |
-| `mpPreferenceId` | String? | ID de la preferencia en MP |
-| `status` | PaymentStatus | `PENDING`, `APPROVED`, `REJECTED`, `REFUNDED` |
-| `amount` | Decimal | Monto del pago |
-
-**Archivos a crear:**
-```
-src/modules/payments/
-├── payment.controller.js
-├── payment.service.js
-├── payment.repository.js
-└── payment.routes.js
-```
-
-**Endpoints:**
-| Método | Ruta | Auth | Descripción |
-|--------|------|------|-------------|
-| POST | `/api/payments/create-preference` | ✅ JWT | Crear preferencia de pago en MP |
-| POST | `/api/payments/webhook` | ❌ | Webhook de MP (notificaciones) |
-| GET | `/api/payments/:orderId` | ✅ JWT | Ver estado del pago |
-
-**Lógica de negocio:**
-1. **Crear preferencia:** El cliente paga → se crea preferencia en MP con los datos del pedido
-2. **Webhook:** MP notifica automáticamente cuando el pago es aprobado o rechazado
-3. **Pago aprobado:** `Payment.status = APPROVED`, `Order.status = PAID`
-4. **Pago rechazado:** `Payment.status = REJECTED`, restaurar stock, orden vuelve a `PENDING`
-
----
-
-### MÓDULO 4: Seed de Base de Datos
-
-**Archivo a crear:** `prisma/seed.js`
-
-**Datos de prueba:**
-- **Categorías:** Café en Grano, Café Molido, Bebidas Calientes, Bebidas Frías, Accesorios
-- **Productos:** 2-3 por categoría con precios, imágenes, tamaños y modificadores
-- **Usuarios:**
-  - `admin@coffeevibes.com` / `admin123` (rol: ADMIN)
-  - `owner@coffeevibes.com` / `owner123` (rol: OWNER)
-  - `cliente@test.com` / `test123` (rol: CUSTOMER)
+| Módulo | Estado | Archivos |
+|--------|--------|----------|
+| **Auth** | ✅ Listo | `src/modules/auth/` |
+| **Catálogo** | ✅ Listo | `src/modules/catalog/` |
+| **Addresses** | ✅ Listo | `src/modules/addresses/` |
+| **Orders** | ✅ Listo | `src/modules/orders/` |
+| **Payments** | ✅ Listo | `src/modules/payments/` |
+| **Seed** | ✅ Listo | `prisma/seed.js` |
 
 ---
 
@@ -589,11 +392,11 @@ src/modules/payments/
 ```
  1. Cliente se registra / inicia sesión    →  Auth          (✅ LISTO)
  2. Explora productos y categorías          →  Catálogo      (✅ LISTO)
- 3. Guarda su dirección de entrega          →  Addresses     (✅ IMPLEMENTADO)
- 4. Arma su pedido (carrito)                →  Orders        (✅ IMPLEMENTADO)
- 5. Paga con Mercado Pago                   →  Payments      (✅ IMPLEMENTADO)
- 6. Dueño ve el pedido y lo prepara         →  Orders        (✅ IMPLEMENTADO)
- 7. Dueño marca como listo/entregado        →  Orders        (✅ IMPLEMENTADO)
+ 3. Guarda su dirección de entrega          →  Addresses     (✅ LISTO)
+ 4. Arma su pedido (carrito)                →  Orders        (✅ LISTO)
+ 5. Paga con Mercado Pago                   →  Payments      (✅ LISTO)
+ 6. Dueño ve el pedido y lo prepara         →  Orders        (✅ LISTO)
+ 7. Dueño marca como listo/entregado        →  Orders        (✅ LISTO)
 
 ```
 
