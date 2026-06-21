@@ -18,7 +18,7 @@ router.get(
 router.post(
   "/",
   authenticate,
-  authorize("ADMIN"),
+  authorize("OWNER", "ADMIN"),
   [
     body("name").notEmpty().withMessage("Nombre requerido"),
     body("categoryId").isInt().withMessage("Categoría requerida"),
@@ -32,7 +32,7 @@ router.post(
 router.put(
   "/:id",
   authenticate,
-  authorize("ADMIN"),
+  authorize("OWNER", "ADMIN"),
   [
     param("id").isInt().withMessage("ID inválido"),
     body("name").optional().notEmpty().withMessage("Nombre no puede estar vacío"),
@@ -45,7 +45,7 @@ router.put(
 router.patch(
   "/:id/stock",
   authenticate,
-  authorize("ADMIN"),
+  authorize("OWNER", "ADMIN"),
   [
     param("id").isInt().withMessage("ID inválido"),
     body("stock").isInt({ min: 0 }).withMessage("Stock debe ser entero >= 0"),
@@ -57,9 +57,10 @@ router.patch(
 router.delete(
   "/:id",
   authenticate,
-  authorize("ADMIN"),
+  authorize("OWNER", "ADMIN"),
   [param("id").isInt().withMessage("ID inválido"), validate],
   catalogController.deleteProduct
 );
+
 
 module.exports = router;

@@ -2,6 +2,8 @@ datasource db {
   provider = "postgresql"
 }
 
+
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -25,8 +27,10 @@ model User {
 
 enum Role {
   CUSTOMER
+  OWNER
   ADMIN
 }
+
 
 model Address {
   id        Int     @id @default(autoincrement())

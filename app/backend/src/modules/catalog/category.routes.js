@@ -12,7 +12,7 @@ router.get("/", categoryController.getCategories);
 router.post(
   "/",
   authenticate,
-  authorize("ADMIN"),
+  authorize("OWNER", "ADMIN"),
   [body("name").notEmpty().withMessage("Nombre requerido"), validate],
   categoryController.createCategory
 );
@@ -20,7 +20,7 @@ router.post(
 router.put(
   "/:id",
   authenticate,
-  authorize("ADMIN"),
+  authorize("OWNER", "ADMIN"),
   [
     param("id").isInt().withMessage("ID inválido"),
     body("name").notEmpty().withMessage("Nombre requerido"),
@@ -28,5 +28,6 @@ router.put(
   ],
   categoryController.updateCategory
 );
+
 
 module.exports = router;
